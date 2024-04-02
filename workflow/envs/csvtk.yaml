@@ -1,0 +1,6 @@
+channels:
+ - defaults
+ - bioconda
+ - conda-forge
+dependencies:
+ - csvtk==0.28.0

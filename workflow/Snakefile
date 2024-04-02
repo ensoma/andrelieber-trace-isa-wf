@@ -1,0 +1,104 @@
+from pathlib import Path
+import re
+
+# Import the config settings.
+configfile: 'config.yaml'
+
+fastq_dir: Path = Path(config['files']['fastq_dir'])
+genome_dir: Path = Path(config['files']['genome_dir'])
+sample_sheet: Path = Path(config['files']['sample_sheet'])
+regions_sheet: Path = Path(config['files']['regions_sheet'])
+outdir: Path = Path(config['files']['outdir'])
+
+R1_adapter: str = config['parameters']['R1_adapter']
+R2_adapter: str = config['parameters']['R2_adapter']
+IR_seq: str = config['parameters']['IR_seq']
+remove_if_any_alt_alignments: bool = config['parameters']['remove_if_any_alt_alignments']
+
+# Create a sample map.
+file_names: list[str] = [f.name for f in fastq_dir.glob('*.fastq.gz')]
+
+pattern: re.Pattern = re.compile(r'^(\S+)_S(\d+)_L00(\d)_R[12]_001\.fastq\.gz$')
+matches: list[tuple[str, str, str]] = list({pattern.search(f).groups() for f in file_names})
+
+sample_map: dict[str, dict[int, int]] = {
+    f"{m[0]}_S{m[1]}_L00{m[2]}": m[0] for m in matches
+}
+
+# Create a genome map.
+fasta_pattern = re.compile('\.fa(sta)?(\.gz)?$')
+genbank_pattern = re.compile('\.gb(k)?(\.gz)?$')
+genome_map = {}
+
+with open(sample_sheet, 'r') as reader:
+    for line in reader:
+        line = line.strip().split(',')
+        genome_map[line[0]] = {
+            'payload_fasta_name': fasta_pattern.sub('', line[1]) if fasta_pattern.search(line[1]) else line[1],
+            'payload_fasta_file': line[1],
+            'payload_gbk_name': genbank_pattern.sub('', line[2]) if genbank_pattern.search(line[2]) else line[2],
+            'payload_gbk_file': line[2],
+            'genome_fasta_name': fasta_pattern.sub('', line[3]) if fasta_pattern.search(line[3]) else line[3],
+            'genome_fasta_file': line[3],
+            'genome_anno_file': line[4]
+        }
+
+payload_genome_combos = {
+    f"{x['payload_fasta_name']}_{x['genome_fasta_name']}": {'payload_fasta_name': x['payload_fasta_name'], 'genome_fasta_name': x['genome_fasta_name']} for x in genome_map.values()
+}
+
+payload_name_file = {
+    x['payload_fasta_name']: x['payload_fasta_file'] for x in genome_map.values()
+}
+
+genome_name_file = {
+    x['genome_fasta_name']: x['genome_fasta_file'] for x in genome_map.values()
+}
+
+# Create a regions map.
+regions_map = {}
+with open(regions_sheet, 'r') as reader:
+    for line in reader:
+        line = line.strip().split(',')
+        regions_map[line[0]] = {
+            'payload_name': line[0],
+            'start_loc': int(line[1]),
+            'end_loc': int(line[2])
+        }
+
+# Rule all (terminal outputs of workflow).
+rule all:
+    input:
+        # Read trimming.
+        R1_adapter_untrimmed = [outdir / f"trimmed/{sample}_R1.adapter.untrimmed.fastq.gz" for sample in sample_map.keys()],
+        R2_adapter_untrimmed = [outdir / f"trimmed/{sample}_R2.adapter.untrimmed.fastq.gz" for sample in sample_map.keys()],
+        R1_ir_untrimmed = [outdir / f"trimmed/{sample_name}_R1.ir.untrimmed.fastq.gz" for sample_name in sample_map.keys()],
+        R2_ir_untrimmed = [outdir / f"trimmed/{sample_name}_R2.ir.untrimmed.fastq.gz" for sample_name in sample_map.keys()],
+        # Payload and genome FAI indices.
+        combined_genomes_fai = [outdir / f"genome/combined_payload_and_genome/{payload_genome}.fa.fai" for payload_genome in payload_genome_combos.keys()],
+        payload_fai = [outdir / f"genome/payload_only/{x['payload_fasta_name']}.fa.fai" for x in genome_map.values()],
+        genome_fasta = [outdir / f"genome/genome_only/{x['genome_fasta_name']}.fa" for x in genome_map.values()],
+        # bigwigs.
+        bigwigs = [outdir / f"tracks/{sample}.bw" for sample in sample_map.keys()],
+        # Final MultiQC report.
+        multiqc_report = outdir / 'multiqc/multiqc_report.html',
+        # Annotated and aggregated insertion site information.
+        aggregated_annotations = outdir / 'annotated_insertion_sites/aggregated_insertion_site_annotations.tsv',
+        # Annotation plots.
+        feature_dist_plot = outdir / 'annotated_insertion_sites/is_feature_distribution_plot.png',
+        top_is_plot = outdir / 'annotated_insertion_sites/top_insertion_sites_plot.png'
+
+# Import the rules.
+include: "rules/trimming.smk"
+include: "rules/prepare_genome.smk"
+include: "rules/alignment.smk"
+include: "rules/filter_alignments.smk"
+include: "rules/trimming_and_mapping_stats.smk"
+include: "rules/payload.smk"
+include: "rules/genome_tracks.smk"
+include: "rules/call_insertion_sites.smk"
+include: "rules/insertion_site_stats.smk"
+include: "rules/insertion_site_annotation.smk"
+include: "rules/insertion_site_annotation_plots.smk"
+include: "rules/seqlogo.smk"
+include: "rules/multiqc.smk"

@@ -1,0 +1,6 @@
+channels:
+ - defaults
+ - bioconda
+ - conda-forge
+dependencies:
+ - coreutils==9.4

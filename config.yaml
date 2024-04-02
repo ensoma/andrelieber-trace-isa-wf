@@ -1,0 +1,12 @@
+
+files:
+  fastq_dir: "data/fastq_files"
+  genome_dir: "data/genome"
+  sample_sheet: "data/sample_sheet.csv"
+  regions_sheet: "data/regions_sheet.csv"
+  outdir: "results"
+parameters:
+  R1_adapter: "^NNNNCGAGTTTTAATGACTCCAACT"
+  R2_adapter: "^AGTGGCACAGCAGTTAGGNNNNNNNNAGATGTGTATAAGAGACAG"
+  IR_seq: "^TAAGTGTATGTAAACTTCCGACTTCAACTG"
+  remove_if_any_alt_alignments: False

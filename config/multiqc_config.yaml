@@ -1,0 +1,642 @@
+# Customizing the report header.
+title: "TRACE ISA Report"
+intro_text: "QC statistics and results summary"
+report_comment: >
+  TRACE Insertion Site Analysis (ISA) is a method for finding transposon-mediated
+  insertion locations in the genome.
+  This report summarizes the quality control and analysis of the sequenced reads.
+
+# Customizing modules.
+module_order:
+  - cutadapt:
+      name: "Cutadapt (Adapter Trimming)"
+      anchor: "cutadapt_adapter_trimming"
+      info: >
+        Check whether the reads have the expedcted R1 and R2 adapter structure.
+        Reads are only retained and trimmed if this structure is present.
+      extra: >
+        <p>TRACE ISA results in reads with an expected structure.</p>
+        <ul>
+          <li>
+            <b>R1</b>:
+            <span style="background-color:DarkKhaki;padding:2px 4px 2px 4px">Random Seq (4 bp)</span>
+            <span style="background-color:Pink;padding:2px 4px 2px 4px">SB IR Primer Site</span>
+            <span style="background-color:SkyBlue;padding:2px 4px 2px 4px">Partial SB IR</span>
+            <span style="background-color:Coral;padding:2px 4px 2px 4px">Insertion Site</span>
+            <span style="background-color:Plum;padding:2px 4px 2px 4px">Genomic Insert</span>
+          </li>
+          <li>
+            <b>R2</b>:
+            <span style="background-color:MediumSeaGreen;padding:2px 4px 2px 4px">Nextera Read 1 Adapter</span>
+            <span style="background-color:DarkKhaki;padding:2px 4px 2px 4px">UMI (8 bp)</span>
+            <span style="background-color:Silver;padding:2px 4px 2px 4px">Tn5 Mosaic</span>
+            <span style="background-color:Plum;padding:2px 4px 2px 4px">Genomic Insert</span>
+          </li>
+        </ul>
+        <p>The sequences for these are as follows.</p>
+        <ul>
+          <li>
+            <b>R1</b>:
+            <span style="background-color:DarkKhaki;padding:2px 4px 2px 4px">NNNN</span>
+            <span style="background-color:Pink;padding:2px 4px 2px 4px">CGAGTTTTAATGACTCCAACT</span>
+            <span style="background-color:SkyBlue;padding:2px 4px 2px 4px">TAAGTGTATGTAAACTTCCGACTTCAACTG</span>
+            <span style="background-color:Coral;padding:2px 4px 2px 4px">N</span>
+            <span style="background-color:Plum;padding:2px 4px 2px 4px">NNNNN</span>
+          </li>
+          <li>
+            <b>R2</b>:
+            <span style="background-color:MediumSeaGreen;padding:2px 4px 2px 4px">AGTGGCACAGCAGTTAGG</span>
+            <span style="background-color:DarkKhaki;padding:2px 4px 2px 4px">NNNNNNNN</span>
+            <span style="background-color:Silver;padding:2px 4px 2px 4px">AGATGTGTATAAGAGACAG</span>
+            <span style="background-color:Plum;padding:2px 4px 2px 4px">NNNNN</span>
+          </li>
+        </ul>
+        <p>In this first trimming step cutadapt will search for
+        <span style="background-color:DarkKhaki;padding:2px 4px 2px 4px">Random Seq (4 bp)</span>
+        <span style="background-color:Pink;padding:2px 4px 2px 4px">SB IR Primer Site</span>
+        on the <b>R1</b> read, and
+        <span style="background-color:MediumSeaGreen;padding:2px 4px 2px 4px">Nextera Read 1 Adapter</span>
+        <span style="background-color:DarkKhaki;padding:2px 4px 2px 4px">UMI (8 bp)</span>
+        <span style="background-color:Silver;padding:2px 4px 2px 4px">Tn5 Mosaic</span>
+        <span style="background-color:Plum;padding:2px 4px 2px 4px">Genomic Insert</span>
+        on the <b>R2</b> read.       
+        Cutadapt will only retain read pairs if both adapters are present with
+        ≤ 5 bp (default) of mismach. After the adapters are detected they are then
+        trimmed off, and any read pairs where one of the pairs is < 20 bp in length
+        after trimming is discarded.</p>
+      target: ""
+      path_filters:
+        - "*.adapter.trimmed.txt"
+  - cutadapt:
+      name: "Cutadapt (IR Trimming)"
+      anchor: "cutadapt_ir_trimming"
+      info: >
+        Ensure the presence of the SB IR in the R1 read and trim if present.
+      extra: >
+        After the initial adapter trimming step, the expected read structure is as follows.
+        <ul>
+          <li>
+            <b>R1</b>:
+            <span style="background-color:SkyBlue;padding:2px 4px 2px 4px">Partial SB IR</span>
+            <span style="background-color:Coral;padding:2px 4px 2px 4px">Insertion Site</span>
+            <span style="background-color:Plum;padding:2px 4px 2px 4px">Genomic Insert</span>
+          </li>
+          <li>
+            <b>R2</b>:
+            <span style="background-color:Plum;padding:2px 4px 2px 4px">Genomic Insert</span>
+          </li>
+        </ul>
+        <p>This next trimming step looks specifically for the
+        <span style="background-color:SkyBlue;padding:2px 4px 2px 4px">Partial SB IR</span>
+        in the R1 read. Cutadapt will only retain read pairs if this sequence is present with
+        ≤ 4 bp (default) of mismach. After the SB IR is detected it is then
+        trimmed off, and any read pairs where one of the pairs is < 20 bp in length
+        after trimming is discarded.
+        </p>
+      target: ""
+      path_filters:
+        - "*.ir.trimmed.txt"
+  - cutadapt:
+      name: "Cutadapt (Adapter Readthrough Trimming)"
+      anchor: "cutadapt_adapter_readthrough_trimming"
+      info: >
+        Trim adapter read-through in small fragments.
+      extra: >
+        After the SB IR trimming step, the expected read structure is as follows.
+        <ul>
+          <li>
+            <b>R1</b>:
+            <span style="background-color:Coral;padding:2px 4px 2px 4px">Insertion Site</span>
+            <span style="background-color:Plum;padding:2px 4px 2px 4px">Genomic Insert</span>
+          </li>
+          <li>
+            <b>R2</b>:
+            <span style="background-color:Plum;padding:2px 4px 2px 4px">Genomic Insert</span>
+          </li>
+        </ul>
+        <p>If the genomic insert size is too small, the R1 read will have sequenced into the R2
+        adapter, and vice versa. In order to remove this adapter readthrough the <b>R1</b> read
+        is checked for the reverse complement of
+        <span style="background-color:MediumSeaGreen;padding:2px 4px 2px 4px">Nextera Read 1 Adapter</span>
+        <span style="background-color:DarkKhaki;padding:2px 4px 2px 4px">UMI (8 bp)</span>
+        <span style="background-color:Silver;padding:2px 4px 2px 4px">Tn5 Mosaic</span>
+        , and the <b>R2</b> read the reverse complemment of
+        <span style="background-color:DarkKhaki;padding:2px 4px 2px 4px">Random Seq (4 bp)</span>
+        <span style="background-color:Pink;padding:2px 4px 2px 4px">SB IR Primer Site</span>
+        <span style="background-color:SkyBlue;padding:2px 4px 2px 4px">Partial SB IR</span>.
+        If these read-through adapters are detected they are then trimmed off,
+        and any read pairs < 20 bp after trimming are discarded.   
+        </p>
+      target: ""
+      path_filters:
+        - "*.adapter.readthrough.trimmed.txt"
+  - cutadapt:
+      name: "Cutadapt (IR Readthrough Trimming)"
+      anchor: "cutadapt_ir_readthrough_trimming"
+      info: >
+        Checks for readthrough of the SB IR in the R2 read.
+      extra: >
+        <p>As a final trimming step, the <b>R2</b> read is checked for the reverse complement
+        of the
+        <span style="background-color:SkyBlue;padding:2px 4px 2px 4px">Partial SB IR</span>.
+        This sequence should normally only be on the R1 read, but in the case of small
+        fragment sizes will be read-through by the R2 read. After trimming any read pairs
+        < 20 bp are discarded.
+        </p>
+      target: ""
+      path_filters:
+        - "*.ir.readthrough.trimmed.txt"
+  - fastqc:
+      name: "FastQC (Untrimmed)"
+      anchor: "fastqc_untrimmed"
+      info: >
+        FastQC report of reads prior to any trimming with cutadapt.
+      target: ""
+      path_filters:
+        - "*_001_fastqc.zip"
+  - fastqc:
+      name: "FastQC (Adapter Trimmed)"
+      anchor: "fastqc_adapter_trimmed"
+      info: >
+        FastQC report after adapter sequence/structure validation and trimming.
+      target: ""
+      path_filters:
+        - "*.adapter.trimmed_fastqc.zip"
+  - fastqc:
+      name: "FastQC (IR Trimmed)"
+      anchor: "fastqc_ir_trimmed"
+      info: >
+        FastQC report after SB IR sequence/structure validation and trimming.
+      target: ""
+      path_filters:
+        - "*.ir.trimmed_fastqc.zip"
+  - fastqc:
+      name: "FastQC (Adapter Readthrough Trimmed)"
+      anchor: "fastqc_adapter_readthrough_trimmed"
+      info: >
+        FastQC report after adapter readthrough trimming.
+      target: ""
+      path_filters:
+        - "*.adapter.readthrough.trimmed_fastqc.zip"
+  - fastqc:
+      name: "FastQC (IR Readthrough Trimmed)"
+      anchor: "fastqc_ir_readthrough_trimmed"
+      info: >
+        FastQC report after IR readthrough trimming.
+      target: ""
+      path_filters:
+        - "*.ir.readthrough.trimmed_fastqc.zip"
+  - samtools:
+      name: "Samtools (Pre-filtering)"
+      anchor: "samtools_prefiltering"
+      info: >
+        Summary statistics for for unfiltered reads after mapping.
+      target: ""
+      path_filters:
+        - "*.aligned.sam.flagstat"
+        - "*.aligned.sam.idxstat"
+  - samtools:
+      name: "Samtools (Post-filtering)"
+      anchor: "samtools_filtered"
+      info: >
+        Summary statistics for mapped reads after filtering.
+      extra: |
+        <p>Multiple filtering criteria are used to only retain high confidence and
+        uniquely mapping read pairs. Filtering is accomplished by discarding or
+        retaining read pairs marked with certain information flags during mapping.</p>
+        <br>
+        <p><b>Filtering Criteria:</b><p>
+        <ul>
+          <li>
+          <span style="background-color:WhiteSmoke;padding:2px 4px 2px 4px">0x4</span>:
+          Unmapped read discarded.
+          </li>
+          <li>
+          <span style="background-color:WhiteSmoke;padding:2px 4px 2px 4px">0x8</span>:
+          Unmapped mate-pair read discarded.
+          </li>
+          <li>
+          <span style="background-color:WhiteSmoke;padding:2px 4px 2px 4px">0x100</span>:
+          Non-primary alignments discarded.
+          </li>
+          <li>
+          <span style="background-color:WhiteSmoke;padding:2px 4px 2px 4px">0x800</span>:
+          Supplementary alignments discarded.
+          </li>
+          <li>
+          <span style="background-color:WhiteSmoke;padding:2px 4px 2px 4px">0x1</span>:
+          Read must have a paired mate.
+          </li>
+          <li>
+          <span style="background-color:WhiteSmoke;padding:2px 4px 2px 4px">0x2</span>:
+          Reead and read mate must be aligned in proper/plausible pair.
+          </li>
+          <li>Require mapping quality ≥ 30.</li>
+        </ul>
+        <br>
+        <p>There is an additional filtering step that is disabled by default where any read pairs
+        with plausible alternative alignments (XA:Z:* or SA:Z:* tags) are discarded.</p>
+      target: ""
+      path_filters:
+        - "*.filtered.bam.flagstat"
+        - "*.filtered.bam.idxstat"
+  - samtools:
+      name: "Samtools (Deduplicated)"
+      anchor: "samtools_deduplicated"
+      info: >
+        Summary statistics for mapped reads after deduplication.
+      extra: |
+        <p>TRACE ISA requires 3 rounds of PCR and is thus prone to PCR duplicates.
+        For PCR duplicate removal duplicates are defined as read pairs that share
+        the same R1 and R2 read start and end locations, which has a low likelihood of occuring by chance.
+        Of these duplicates, samtools will retain only one pair of reads with the highest alignment score.</p>
+      target: ""
+      path_filters:
+        - "*.deduped.bam.flagstat"
+        - "*.deduped.bam.idxstat"
+  - samtools:
+      name: "Samtools (Softclip Filtered)"
+      anchor: "samtools_softclip_filtered"
+      info: >
+        Summary statistics for mapped reads after softclip filtering.
+      extra: |
+        <p>Prior to alignment adapter and IR filtering results in the R1 read structure
+        <span style="background-color:Coral;padding:2px 4px 2px 4px">Insertion Site</span>
+        <span style="background-color:Plum;padding:2px 4px 2px 4px">Genomic Insert</span>.
+        Thus theoretically the insertion site should be the 5'-most base on the R1 read.
+        However, during alignment it's possible for a string of bases on the 5' end of the R1
+        read to not align to the genome. If this occurs those bases are "soft clipped" from
+        the alignment. This filtering step ensures that ≤ 5 bp of softclip are present,
+        and reads with more than that are discarded.
+        </p>
+      target: ""
+      path_filters:
+        - "*.softclip_removed.bam.flagstat"
+        - "*.softclip_removed.bam.idxstat"
+
+# Custom content.
+custom_data:
+  aggregate_stats:
+    section_name: "Aggregate Stats"
+    description: >
+      Various statistics surrounding insertion sites, reads, and payload-mapping numbers.
+    extra: |
+      <ul>
+        <li><b>ISs</b>: The number of unique insertion sites passing filtering.</li>
+        <li><b>Blacklisted ISs</b>: The number of blacklisted* unique insertion sites.</li>
+        <li><b>Total Reads</b>: The total number of unique molecules sequenced passing filtering.</li>
+        <li><b>Blacklisted Reads</b>: The total number of blacklisted* unique molecules sequenced.</li>
+        <li><b>Genome Reads</b>:
+          The number of unique molecules associated with canonical SB-mediated integration.
+          These have the fragment sequence structure:
+          <ul><li>
+            <span style="background-color:Pink;padding:2px 4px 2px 4px">SB IR Primer Site</span>
+            <span style="background-color:SkyBlue;padding:2px 4px 2px 4px">Partial SB IR</span>
+            <span style="background-color:Coral;padding:2px 4px 2px 4px">Insertion Site</span>
+            <span style="background-color:Plum;padding:2px 4px 2px 4px">Genomic Insert</span>.
+          </li></ul>
+        </li>
+        <li><b>Payload ISs</b>: The number of unique mapping locations on the payload.</li>
+        <li><b>Payload Reads</b>: Unique molecules mapping to the payload.</li>
+        <li><b>Payload Region</b>:
+          The number of unique molecules associated with SB-independent reads.
+          These have the fragment sequence structure:
+          <ul><li>
+            <span style="background-color:Pink;padding:2px 4px 2px 4px">SB IR Primer Site</span>
+            <span style="background-color:SkyBlue;padding:2px 4px 2px 4px">Partial SB IR</span>
+            <span style="background-color:HotPink;padding:2px 4px 2px 4px">SB IR-adjacent Stuffer</span>.
+          </li></ul>
+        </li>        
+      </ul>
+      <P>*Insertion site appears with a score greater than 1 in more than 2 samples.</p>
+    plot_type: "table"
+    headers:
+      payload_name:
+        title: "Payload Name"
+      insertion_sites:
+        title: "ISs"
+        format: "{:,.0f}"
+        cond_formatting_rules:
+          pass:
+            - gt: 99
+          warn:
+            - lt: 100
+          fail:
+            - lt: 20
+        scale: False
+      blacklisted_sites:
+        title: "Blacklisted ISs"
+        format: "{:,.0f}"
+        scale: "Greys"
+      total_reads:
+        title: "Total Reads"
+        format: "{:,.0f}"
+        scale: False
+        cond_formatting_rules:
+          pass:
+            - gt: 999
+          warn:
+            - lt: 1000
+          fail:
+            - lt: 100
+      blacklisted_reads:
+        title: "Blacklisted Reads"
+        format: "{:,.0f}"
+        scale: "Greys"
+      genome_reads:
+        title: "Genome Reads"
+        format: "{:,.0f}"
+        scale: False
+      payload_insertion_sites:
+        title: "Payload ISs"
+        format: "{:,.0f}"
+        scale: False
+        cond_formatting_rules:
+          present:
+            - gt: 0
+        cond_formatting_colours:
+          - present: "DodgerBlue"
+      payload_reads:
+        title: "Payload Reads"
+        format: "{:,.0f}"
+        scale: "Blues"
+      payload_region:
+        title: "Payload Region"
+        format: "{:,.0f}"
+        scale: "Blues"
+    pconfig:
+      no_beeswarm: True
+  is_fractions_plot:
+    section_name: "Insertion Site Percentages"
+    description: >
+      The percentage of reads for each insertion site in each sample.
+      Identical insertion sites will share the same color across samples.
+  top_insertion_sites_table:
+    section_name: "Top 10 Insertion Sites"
+    description: >
+      Top 10 insertion sites.
+      Sites proximal to genes are labeled by the gene name.
+    plot_type: "bargraph"
+    pconfig:
+      id: "top_insertion_sites_table"
+      title: "Top 10 Insertion Sites"
+      use_legend: False
+      cpswitch_c_active: True
+      no_beeswarm: True
+  is_feature_distribution_table:
+    section_name: "Insertion Site Genomic Feature Distribution"
+    description: >
+      Genomic feature distribution of insertion sites.
+      By default promoter regions are defined as -2 kbp to +0.2 kbp
+      from the transcription start sites of transcripts.
+      Downstream is considered +3 kb from the 3' UTR.
+    plot_type: "bargraph"
+    pconfig:
+      id: "is_feature_distribution_table"
+      title: "Genomic Feature Distribution"
+      cpswitch_c_active: False
+      no_beeswarm: True
+  promoter_distribution_plot:
+    section_name: "Insertion Site Promoter Distribution"
+    description: >
+      Histogram of insertion site distance to the nearest promoter.
+      By default promoters are defined as -2 kbp to +0.2 kbp from the transcription
+      start sites of transcripts.
+      Insertion sites contained within a promoter are assigned a distance of 0.
+  is_seqlogo:
+    section_name: "Insertion Site Sequence Logos"
+    description: >
+      Sequence logos for insertion sites.
+      The 0 position represents the first genome-aligned base after the IR.
+  discarded_is_report:
+    section_name: "Discarded Insertion Sites"
+    description: >
+      Insertion sites that were discarded due to overlapping a
+      blacklisted insertion site.
+      Insertion sites are blacklisted if they appear in more than
+      2 samples with at least 2 unique sequenced molecules. 
+    plot_type: "table"
+    pconfig:
+      no_beeswarm: False
+      id: "discarded_is_report"
+      title: "Discarded Insertion Sites"
+      use_legend: False
+      height: 1024
+  trimming_alignment_stats:
+    section_name: "Trimming and Alignment Filtering Stats"
+    description: "QC filtering stats"
+    extra: |
+      <p>
+      This table outlines the number of reads remaining after each FASTQ and SAM/BAM
+      trimming/filtering step.
+      For a more detailed description of each cutadapt or samtools filtering step
+      refer to the specific section in the MultiQC report. 
+      </p>
+      <ul>
+        <li><b>Adapter Trimmed (FASTQ)</b>: Ensuring the correct R1 and R2 adapter structures.</li>
+        <ul>
+          <li><b>R1</b>:
+            <span style="background-color:DarkKhaki;padding:2px 4px 2px 4px">Random Seq (4 bp)</span>
+            <span style="background-color:Pink;padding:2px 4px 2px 4px">SB IR Primer Site</span>
+          </li>
+          <li><b>R2</b>:
+            <span style="background-color:MediumSeaGreen;padding:2px 4px 2px 4px">Nextera Read 1 Adapter</span>
+            <span style="background-color:DarkKhaki;padding:2px 4px 2px 4px">UMI (8 bp)</span>
+            <span style="background-color:Silver;padding:2px 4px 2px 4px">Tn5 Mosaic</span>
+          </li>
+        </ul>
+        <li><b>IR Trimmed (FASTQ)</b>: Checking for the
+        <span style="background-color:SkyBlue;padding:2px 4px 2px 4px">Partial SB IR</span>
+        on the 5' end of the R1 read.
+        </li>
+        <li><b>Adapter Readthrough Trimmed (FASTQ)</b>: Checking for the reverse complement of the
+        R1 adapter on the R2 read and vice versa.</li>
+        <li><b>IR Readthrough Trimmed (FASTQ)</b>: Checking for the reverse complement of the
+        <span style="background-color:SkyBlue;padding:2px 4px 2px 4px">Partial SB IR</span>
+        on the 3' end of the R2 read.</li>
+        <li><b>Unmapped Reads (SAM)</b>: The number of read pairs not mapped to the genome or payload.</li>
+        <li><b>Flag Filtered (BAM)</b>: The number of read pairs after filtering for uniquely and confidently
+        mapped primary read alignments.</li>
+        <li><b>Deduplicated (BAM)</b>: The number of read pairs after filtering out PCR duplicates.</li>
+        <li><b>5' Softclip Filtered (BAM)</b>: The number of read pairs after filtering pairs out
+        with too many softclipped 5' bases on the R1 read.</li>
+        <li><b>Blacklisted (ISs)</b>: The number of reads associated with blacklisted insertion sites.
+        Insertion sites are blacklisted if they have ≥ reads in ≥ 2 samples.</li>
+        <li><b>Remaining</b>: The number of reads remaining after all filtering steps.</li>
+      </ul>
+    plot_type: "bargraph"
+    pconfig:
+      no_beeswarm: True
+      id: "trimming_alignment_stats"
+      title: "Trimming and Alignment Filtering Stats"
+    headers:
+      Adapter Trimmed (FASTQ):
+        title: "Adapter Trimmed (FASTQ)"
+        format: "{:,.0f}"
+        scale: "GnBu"
+      IR Trimmed (FASTQ):
+        title: "IR Trimmed (FASTQ)"
+        format: "{:,.0f}"
+        scale: "GnBu"
+      Adater Readthrough Trimmed (FASTQ):
+        title: "Adater Readthrough Trimmed (FASTQ)"
+        format: "{:,.0f}"
+        scale: "GnBu"
+      IR Readthrough Trimmed (FASTQ):
+        title: "IR Readthrough Trimmed (FASTQ)"
+        format: "{:,.0f}"
+        scale: "GnBu"
+      Unmapped Reads (SAM):
+        title: "Unmapped Reads (SAM)"
+        format: "{:,.0f}"
+        scale: "RdPu"
+      Flag Filtered (BAM):
+        title: "Flag Filtered (BAM)"
+        format: "{:,.0f}"
+        scale: "RdPu"
+      Deduplicated (BAM):
+        title: "Deduplicated (BAM)"
+        format: "{:,.0f}"
+        scale: "RdPu"
+      5' Softclip Filtered (BAM):
+        title: "5' Softclip Filtered (BAM)"
+        format: "{:,.0f}"
+        scale: "RdPu"
+      Blacklisted (ISs):
+        title: "Blacklisted (ISs)"
+        format: "{:,.0f}"
+        scale: "Greys"
+      Remaining:
+        title: "Remaining Reads"
+        format: "{:,.0f}"
+        scale: "Greys"
+
+sp:
+  aggregate_stats:
+    fn: "*aggregate_stats.tsv"
+  is_fractions_plot:
+    fn: "*is_fractions_plot.png"
+  top_insertion_sites_table:
+    fn: "*top_insertion_sites_table.tsv"
+  is_feature_distribution_table:
+    fn: "*is_feature_distribution_table.tsv"
+  promoter_distribution_plot:
+    fn: "*promoter_distribution_plot.png"
+  is_seqlogo:
+    fn: "*is_seqlogo.png"
+  discarded_is_report:
+    fn: "*discarded_is_report.tsv"
+  trimming_alignment_stats:
+    fn: "aggregate.trimming_and_mapping_stats.tsv"
+
+max_table_rows: 5
+ignore_images: false
+
+# Exclude modules.
+exclude_modules:
+  - general_stats
+
+# Module orders.
+report_section_order:
+  general_stats:
+    order: 1000
+  aggregate_stats:
+    order: 990
+  is_fractions_plot:
+    order: 980
+  top_insertion_sites_table:
+    order: 970
+  is_feature_distribution_table:
+    order: 960
+  promoter_distribution_plot:
+    order: 950
+  is_seqlogo:
+    order: 940
+  trimming_alignment_stats:
+    order: 930
+  cutadapt_adapter_trimming:
+    order: 920
+  cutadapt_ir_trimming:
+    order: 910
+  cutadapt_adapter_readthrough_trimming:
+    order: 900
+  cutadapt_ir_readthrough_trimming:
+    order: 890
+  fastqc_untrimmed:
+    order: 880
+  fastqc_adapter_trimmed:
+    order: 870
+  fastqc_ir_trimmed:
+    order: 860
+  fastqc_adapter_readthrough_trimmed:
+    order: 850
+  fastqc_ir_readthrough_trimmed:
+    order: 840
+  samtools_prefiltering:
+    order: 830
+  samtools_filtered:
+    order: 820
+  samtools_deduplicated:
+    order: 810
+  samtools_softclip_filtered:
+    order: 800
+  discarded_is_report:
+    order: 790
+
+# Group by read direction.
+show_hide_buttons:
+  - Forward Reads
+  - Reverse Reads
+show_hide_mode:
+  - show
+  - show
+show_hide_patterns:
+  - _R1
+  - _R2
+
+# Software versions.
+software_versions:
+  General Software:
+    ubuntu: "18.04"
+    samtools: "1.17"
+    bwa: "0.7.17"
+    csvtk: "0.28.0"
+    bedtools: "2.31.0"
+    multiqc: "1.16"
+    bedgraphtobigwig: "445"
+  Python:
+    python: "3.8.16"
+    pysam: "0.21.0"
+  R:
+    r-base: "4.3.1"
+    tidyverse: "2.0.0"
+    patchwork: "1.1.3"
+    gridextra: "2.3"
+    randomcolor: "1.1.0.1"
+    optparse: "1.7.3"
+    rtracklayer: "1.60.0"
+    genomicfeatures: "1.52.1"
+    chipseeker: "1.36.0"
+    ggseqlogo: "0.1"
+    assertthat: "0.2.1"
+    biostrings: "2.68.1"
+
+# Specify how filenames are cleaned.
+#   - fn_clean_exts remove match and anything after.
+#   - fn_clean_trim removes match if at end of string.
+# Both must be specified to override multiqc defaults.
+#   defaults: https://github.com/ewels/MultiQC/blob/cda87f8e66d856eefa8f9a8de465224ecd6c47ff/multiqc/utils/config_defaults.yaml#L156-L315
+fn_clean_exts:
+  - ".fastq"
+  - ".bam"
+  - ".sam"
+  - ".flagstat"
+  - ".idxstat"
+  - "_fastqc"
+  - ".txt"
+
+fn_clean_trim:
+  - "."
+  - "_"
+  - "_mqc"
+  - ".trimmed"

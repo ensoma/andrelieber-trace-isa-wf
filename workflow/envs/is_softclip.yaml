@@ -1,0 +1,7 @@
+channels:
+ - defaults
+ - bioconda
+ - conda-forge
+dependencies:
+ - pysam==0.21.0
+ - samtools==1.17
